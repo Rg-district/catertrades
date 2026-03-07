@@ -1,114 +1,115 @@
 'use client'
+
 import { useState } from 'react'
+import Link from 'next/link'
 
 export default function BuyPage() {
-  const [form, setForm] = useState({
-    vehicle_type: '', budget_min: '', budget_max: '',
-    location: '', requirements: '', name: '', email: '', phone: '',
-  })
-  const [submitted, setSubmitted] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [form, setForm] = useState({ name: '', email: '', phone: '', vehicle_type: '', budget_min: '', budget_max: '', location: '', requirements: '' })
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
 
-  const update = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
+  const handle = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+    setForm(f => ({ ...f, [e.target.name]: e.target.value }))
 
-  async function handleSubmit(e: React.FormEvent) {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setStatus('loading')
     try {
-      await fetch('/api/buyer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      })
-      setSubmitted(true)
+      const res = await fetch('/api/buyer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+      setStatus(res.ok ? 'success' : 'error')
     } catch {
-      alert('Error — please try again or call 0203 627 7275')
-    } finally {
-      setLoading(false)
+      setStatus('error')
     }
   }
 
-  if (submitted) return (
-    <main style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 40 }}>
-      <div>
-        <div style={{ fontSize: 64, marginBottom: 24 }}>✅</div>
-        <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 12 }}>Enquiry received</h1>
-        <p style={{ color: '#888', fontSize: 16, maxWidth: 420, margin: '0 auto 32px', lineHeight: 1.7 }}>
-          We'll match your requirements against our current and incoming listings and be in touch within 48 hours.
-        </p>
-        <a href="/" style={{ background: '#f59e0b', color: '#000', padding: '12px 28px', borderRadius: 8, textDecoration: 'none', fontWeight: 700 }}>Back to home</a>
-      </div>
-    </main>
-  )
-
-  const input = (label: string, key: string, placeholder: string, type = 'text') => (
-    <div style={{ marginBottom: 18 }}>
-      <label style={{ display: 'block', fontSize: 13, color: '#888', marginBottom: 6 }}>{label}</label>
-      <input type={type} value={(form as any)[key]} placeholder={placeholder}
-        onChange={e => update(key, e.target.value)} required
-        style={{ width: '100%', padding: '12px 14px', background: '#111', border: '1px solid #2a2a2a', borderRadius: 8, color: '#fff', fontSize: 15 }} />
-    </div>
-  )
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '11px 14px', border: '1.5px solid #e8e8e8',
+    borderRadius: 9, fontSize: 14, fontFamily: 'inherit', outline: 'none',
+    background: '#fff', color: '#111',
+  }
+  const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: '#555', marginBottom: 6, display: 'block' }
 
   return (
-    <main style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', padding: '60px 20px' }}>
-      <div style={{ maxWidth: 560, margin: '0 auto' }}>
-        <a href="/" style={{ color: '#666', fontSize: 13, textDecoration: 'none', display: 'block', marginBottom: 32 }}>← Back</a>
-        <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Find your vehicle</h1>
-        <p style={{ color: '#888', marginBottom: 40, lineHeight: 1.7 }}>
-          Tell us what you're looking for. We match you to available vehicles and handle the introduction. No cost to buyers.
-        </p>
+    <div style={{ minHeight: '100vh', background: '#fafafa', fontFamily: '-apple-system, BlinkMacSystemFont, Inter, sans-serif' }}>
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 28px', height: 58, background: '#fff', borderBottom: '1px solid #ebebeb' }}>
+        <Link href="/" style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.5px', textDecoration: 'none', color: '#111' }}>
+          <span style={{ color: '#f59e0b' }}>Cater</span>Trades
+        </Link>
+        <Link href="/" style={{ fontSize: 13, color: '#888', textDecoration: 'none' }}>← Back to listings</Link>
+      </nav>
 
-        {/* Featured listing callout */}
-        <div style={{ background: '#111', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 10, padding: 20, marginBottom: 40 }}>
-          <div style={{ fontSize: 11, color: '#f59e0b', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8 }}>Available now</div>
-          <div style={{ fontWeight: 700, marginBottom: 4 }}>Renault Master Truck — £42,000 ono</div>
-          <div style={{ fontSize: 13, color: '#888' }}>Fully equipped catering van · 88k miles · Fresh MOT · Epping, Essex</div>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: 18 }}>
-            <label style={{ display: 'block', fontSize: 13, color: '#888', marginBottom: 6 }}>Vehicle type</label>
-            <select value={form.vehicle_type} onChange={e => update('vehicle_type', e.target.value)} required
-              style={{ width: '100%', padding: '12px 14px', background: '#111', border: '1px solid #2a2a2a', borderRadius: 8, color: form.vehicle_type ? '#fff' : '#555', fontSize: 15 }}>
-              <option value="">What are you looking for?</option>
-              <option>Food truck / catering van (fully equipped)</option>
-              <option>Blank / conversion base vehicle</option>
-              <option>Mobile bar unit</option>
-              <option>Ice cream / dessert van</option>
-              <option>Coffee van</option>
-              <option>Other commercial vehicle</option>
-            </select>
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '48px 20px' }}>
+        {status === 'success' ? (
+          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <div style={{ fontSize: 48, marginBottom: 20 }}>✅</div>
+            <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 12 }}>Enquiry received</h2>
+            <p style={{ color: '#888', fontSize: 15, lineHeight: 1.7 }}>We'll match you with suitable vehicles and be in touch within 48 hours.</p>
+            <Link href="/" style={{ display: 'inline-block', marginTop: 28, background: '#111', color: '#fff', padding: '12px 24px', borderRadius: 8, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>Back to listings</Link>
           </div>
+        ) : (
+          <>
+            <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-1px', marginBottom: 8 }}>Find your vehicle</h1>
+            <p style={{ color: '#888', fontSize: 15, lineHeight: 1.7, marginBottom: 36 }}>Tell us what you're looking for and we'll match you with the right vehicle.</p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div>{input('Budget min (£)', 'budget_min', '20000')}</div>
-            <div>{input('Budget max (£)', 'budget_max', '50000')}</div>
-          </div>
+            <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div style={{ background: '#fff', border: '1px solid #ebebeb', borderRadius: 14, padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#111', marginBottom: 4 }}>Your details</div>
+                {[
+                  { name: 'name', label: 'Full name', placeholder: 'John Smith', type: 'text' },
+                  { name: 'email', label: 'Email address', placeholder: 'john@example.com', type: 'email' },
+                  { name: 'phone', label: 'Phone number', placeholder: '+44 7700 900000', type: 'tel' },
+                ].map(f => (
+                  <div key={f.name}>
+                    <label style={labelStyle}>{f.label}</label>
+                    <input name={f.name} type={f.type} placeholder={f.placeholder} value={form[f.name as keyof typeof form]} onChange={handle} required style={inputStyle} />
+                  </div>
+                ))}
+              </div>
 
-          {input('Preferred location / radius', 'location', 'e.g. London, or anywhere UK')}
+              <div style={{ background: '#fff', border: '1px solid #ebebeb', borderRadius: 14, padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#111', marginBottom: 4 }}>What are you looking for?</div>
+                <div>
+                  <label style={labelStyle}>Vehicle type</label>
+                  <select name="vehicle_type" value={form.vehicle_type} onChange={handle} required style={inputStyle}>
+                    <option value="">Select type</option>
+                    <option>Catering Van</option>
+                    <option>Food Truck</option>
+                    <option>Trailer</option>
+                    <option>Mobile Kitchen</option>
+                    <option>Any</option>
+                  </select>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  <div>
+                    <label style={labelStyle}>Min budget (£)</label>
+                    <input name="budget_min" type="number" placeholder="20000" value={form.budget_min} onChange={handle} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Max budget (£)</label>
+                    <input name="budget_max" type="number" placeholder="60000" value={form.budget_max} onChange={handle} required style={inputStyle} />
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Preferred location</label>
+                  <input name="location" type="text" placeholder="e.g. London, or anywhere in UK" value={form.location} onChange={handle} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Requirements / notes</label>
+                  <textarea name="requirements" placeholder="Any specific equipment, size requirements, use case..." value={form.requirements} onChange={handle} rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
+                </div>
+              </div>
 
-          <div style={{ marginBottom: 18 }}>
-            <label style={{ display: 'block', fontSize: 13, color: '#888', marginBottom: 6 }}>Requirements / must-haves</label>
-            <textarea value={form.requirements} placeholder="e.g. Must have LPG setup, 3-phase power, under 100k miles, MOT valid..." rows={3}
-              onChange={e => update('requirements', e.target.value)}
-              style={{ width: '100%', padding: '12px 14px', background: '#111', border: '1px solid #2a2a2a', borderRadius: 8, color: '#fff', fontSize: 15, resize: 'vertical' }} />
-          </div>
-
-          <div style={{ borderTop: '1px solid #1e1e1e', paddingTop: 24, marginBottom: 24 }}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Your details</h3>
-            {input('Name', 'name', 'Your name')}
-            {input('Email', 'email', 'you@email.com', 'email')}
-            {input('Phone', 'phone', '+44 7xxx xxxxxx', 'tel')}
-          </div>
-
-          <button type="submit" disabled={loading}
-            style={{ width: '100%', padding: '14px', background: loading ? '#d97706' : '#f59e0b', color: '#000', border: 'none', borderRadius: 8, fontSize: 16, fontWeight: 700, cursor: loading ? 'wait' : 'pointer' }}>
-            {loading ? 'Submitting...' : 'Submit enquiry — free →'}
-          </button>
-          <p style={{ fontSize: 12, color: '#444', textAlign: 'center', marginTop: 12 }}>Free for buyers · We match you within 48 hours</p>
-        </form>
+              <button type="submit" disabled={status === 'loading'} style={{
+                background: status === 'loading' ? '#888' : '#111', color: '#fff',
+                padding: '14px 24px', borderRadius: 10, fontWeight: 700, fontSize: 15,
+                border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              }}>
+                {status === 'loading' ? 'Submitting...' : 'Submit enquiry →'}
+              </button>
+              {status === 'error' && <p style={{ color: '#e53e3e', fontSize: 13, textAlign: 'center' }}>Something went wrong. Please try again.</p>}
+            </form>
+          </>
+        )}
       </div>
-    </main>
+    </div>
   )
 }
