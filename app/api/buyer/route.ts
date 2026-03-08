@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
+  const { listing_id, buyer_name, buyer_email, buyer_phone, message } = body
 
   try {
-    const { createClient } = await import('@supabase/supabase-js')
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-    const { error } = await supabase.from('buyer_enquiries').insert([{
-      ...body, status: 'new', created_at: new Date().toISOString(),
+    const { error } = await supabaseAdmin.from('enquiries').insert([{
+      listing_id,
+      buyer_name,
+      buyer_email,
+      buyer_phone,
+      message,
     }])
     if (error) console.error('Supabase error:', error)
   } catch (e) {
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: process.env.TELEGRAM_CHAT_ID,
-        text: `🔍 *New BUYER enquiry — CaterTrades*\n\nLooking for: ${body.vehicle_type}\nBudget: £${body.budget_min}–£${body.budget_max}\nLocation: ${body.location}\n\nNeeds: ${body.requirements}\n\nContact: ${body.name} · ${body.email} · ${body.phone}`,
+        text: `🔍 *New BUYER enquiry — CaterTrades*\n\nListing: ${listing_id}\nMessage: ${message}\n\nContact: ${buyer_name} · ${buyer_email} · ${buyer_phone}`,
         parse_mode: 'Markdown',
       }),
     })

@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { LISTINGS, type Listing } from '@/lib/listings'
+import { type Listing } from '@/lib/listings'
 
 const Map = dynamic(() => import('./components/Map'), { ssr: false })
 
-const VEHICLE_TYPES = ['All', 'Catering Van', 'Food Truck', 'Trailer', 'Mobile Kitchen']
+const VEHICLE_TYPES = ['All', 'Van', 'Truck', 'Trailer', 'Cart']
 const BUDGETS = [
   { label: 'Any budget', min: 0, max: Infinity },
   { label: 'Under £30k', min: 0, max: 30000 },
@@ -18,30 +18,51 @@ const LOCATIONS = ['Anywhere', 'London', 'Manchester', 'Birmingham', 'Bristol', 
 const SORT_OPTIONS = ['Recently listed', 'Price: Low–High', 'Price: High–Low']
 
 export default function Home() {
-  const [activeListing, setActiveListing] = useState<Listing | null>(LISTINGS[0])
+  const [listings, setListings] = useState<Listing[]>([])
+  const [activeListing, setActiveListing] = useState<Listing | null>(null)
   const [vehicleType, setVehicleType] = useState('All')
   const [budget, setBudget] = useState(0)
   const [location, setLocation] = useState('Anywhere')
   const [sort, setSort] = useState('Recently listed')
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchListings() {
+      try {
+        const params = new URLSearchParams()
+        if (location !== 'Anywhere') params.set('location', location)
+        const budgetObj = BUDGETS[budget]
+        if (budgetObj.min > 0) params.set('min_price', String(budgetObj.min))
+        if (budgetObj.max < Infinity) params.set('max_price', String(budgetObj.max))
+        if (vehicleType !== 'All') params.set('vehicle_type', vehicleType)
+
+        const res = await fetch(`/api/listings?${params.toString()}`)
+        const data = await res.json()
+        const fetched: Listing[] = (data.listings || []).map((l: Record<string, unknown>) => ({
+          ...l,
+          priceLabel: l.price_label as string,
+          tags: (l.tags as string[]) || [],
+        }))
+        setListings(fetched)
+        if (fetched.length > 0 && !activeListing) setActiveListing(fetched[0])
+      } catch (e) {
+        console.error('Failed to fetch listings:', e)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchListings()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vehicleType, budget, location])
 
   const filtered = useMemo(() => {
-    let result = [...LISTINGS]
-    const budgetObj = BUDGETS[budget]
-
-    if (vehicleType !== 'All') {
-      // basic filter - expand later with real type field
-    }
-    result = result.filter(l => l.price >= budgetObj.min && l.price <= budgetObj.max)
-    if (location !== 'Anywhere') {
-      result = result.filter(l => l.location.includes(location))
-    }
+    let result = [...listings]
     if (sort === 'Price: Low–High') result.sort((a, b) => a.price - b.price)
     if (sort === 'Price: High–Low') result.sort((a, b) => b.price - a.price)
     // Featured always first
     result.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
-
     return result
-  }, [vehicleType, budget, location, sort])
+  }, [listings, sort])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#fafafa' }}>
@@ -112,13 +133,23 @@ export default function Home() {
           width: 400, flexShrink: 0, overflowY: 'auto',
           borderRight: '1px solid #ebebeb', background: '#fff',
         }}>
+          {/* List free CTA */}
+          <Link href="/sell" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '14px 16px', background: '#fef3c7', borderBottom: '1px solid #fde68a',
+            textDecoration: 'none', color: '#92400e', fontSize: 13, fontWeight: 700,
+          }}>
+            <span>List your vehicle free →</span>
+            <span style={{ fontSize: 11, fontWeight: 500, color: '#b45309' }}>No fees</span>
+          </Link>
+
           {/* Feed header */}
           <div style={{
             padding: '16px 16px 12px', borderBottom: '1px solid #f5f5f5',
             position: 'sticky', top: 0, background: '#fff', zIndex: 10,
           }}>
             <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-0.3px' }}>
-              {filtered.length} vehicle{filtered.length !== 1 ? 's' : ''} available
+              {loading ? 'Loading...' : `${filtered.length} vehicle${filtered.length !== 1 ? 's' : ''} available`}
             </div>
             <div style={{ fontSize: 11, color: '#bbb', marginTop: 2 }}>
               UK · {vehicleType === 'All' ? 'All types' : vehicleType} · {BUDGETS[budget].label}
@@ -140,54 +171,57 @@ export default function Home() {
 
           {/* Cards */}
           <div style={{ padding: 10 }}>
-            {filtered.length === 0 ? (
+            {!loading && filtered.length === 0 ? (
               <div style={{ padding: 40, textAlign: 'center', color: '#aaa', fontSize: 14 }}>
                 No vehicles match your filters
               </div>
             ) : filtered.map(listing => (
-              <div key={listing.id}
-                onClick={() => setActiveListing(listing)}
-                style={{
-                  display: 'flex', background: '#fff', marginBottom: 8,
-                  border: `1.5px solid ${activeListing?.id === listing.id ? '#f59e0b' : '#f0f0f0'}`,
-                  borderRadius: 12, overflow: 'hidden', cursor: 'pointer',
-                  boxShadow: activeListing?.id === listing.id ? '0 0 0 3px rgba(245,158,11,0.12)' : 'none',
-                  transition: 'border-color 0.15s, box-shadow 0.15s',
-                }}>
-                {/* Image */}
-                <div style={{
-                  width: 110, minWidth: 110, background: '#f8f8f8',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 30, position: 'relative', flexShrink: 0,
-                }}>
-                  🚐
-                  {listing.featured && (
-                    <div style={{
-                      position: 'absolute', top: 8, left: 8,
-                      background: '#f59e0b', color: '#000', fontSize: 8,
-                      fontWeight: 800, padding: '3px 7px', borderRadius: 4,
-                      textTransform: 'uppercase', letterSpacing: 0.8,
-                    }}>Featured</div>
-                  )}
+              <Link key={listing.id} href={`/listings/${listing.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <div
+                  onClick={(e) => { e.preventDefault(); setActiveListing(listing) }}
+                  onDoubleClick={() => { window.location.href = `/listings/${listing.id}` }}
+                  style={{
+                    display: 'flex', background: '#fff', marginBottom: 8,
+                    border: `1.5px solid ${activeListing?.id === listing.id ? '#f59e0b' : '#f0f0f0'}`,
+                    borderRadius: 12, overflow: 'hidden', cursor: 'pointer',
+                    boxShadow: activeListing?.id === listing.id ? '0 0 0 3px rgba(245,158,11,0.12)' : 'none',
+                    transition: 'border-color 0.15s, box-shadow 0.15s',
+                  }}>
+                  {/* Image */}
+                  <div style={{
+                    width: 110, minWidth: 110, background: '#f8f8f8',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 30, position: 'relative', flexShrink: 0,
+                  }}>
+                    🚐
+                    {listing.featured && (
+                      <div style={{
+                        position: 'absolute', top: 8, left: 8,
+                        background: '#f59e0b', color: '#000', fontSize: 8,
+                        fontWeight: 800, padding: '3px 7px', borderRadius: 4,
+                        textTransform: 'uppercase', letterSpacing: 0.8,
+                      }}>Featured</div>
+                    )}
+                  </div>
+                  {/* Body */}
+                  <div style={{ padding: '12px 14px', flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#111', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 3 }}>
+                      {listing.title}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#aaa', marginBottom: 8 }}>
+                      📍 {listing.location} · {(listing.miles / 1000).toFixed(0)}k miles · {listing.year}
+                    </div>
+                    <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.5px', color: '#111' }}>
+                      {listing.priceLabel || listing.price_label} <span style={{ fontSize: 11, color: '#ccc', fontWeight: 400 }}>ono</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 8 }}>
+                      {listing.tags.slice(0, 3).map(tag => (
+                        <span key={tag} style={{ fontSize: 10, color: '#888', background: '#f5f5f5', padding: '3px 8px', borderRadius: 4, fontWeight: 500 }}>{tag}</span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                {/* Body */}
-                <div style={{ padding: '12px 14px', flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#111', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 3 }}>
-                    {listing.title}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#aaa', marginBottom: 8 }}>
-                    📍 {listing.location} · {(listing.miles / 1000).toFixed(0)}k miles · {listing.year}
-                  </div>
-                  <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.5px', color: '#111' }}>
-                    {listing.priceLabel} <span style={{ fontSize: 11, color: '#ccc', fontWeight: 400 }}>ono</span>
-                  </div>
-                  <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 8 }}>
-                    {listing.tags.slice(0, 3).map(tag => (
-                      <span key={tag} style={{ fontSize: 10, color: '#888', background: '#f5f5f5', padding: '3px 8px', borderRadius: 4, fontWeight: 500 }}>{tag}</span>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              </Link>
             ))}
 
             {/* Sell CTA at bottom */}
@@ -197,7 +231,7 @@ export default function Home() {
             }}>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>Got a vehicle to sell?</div>
-                <div style={{ fontSize: 11, color: '#555', marginTop: 3 }}>No upfront fees. 2–5% on completion.</div>
+                <div style={{ fontSize: 11, color: '#555', marginTop: 3 }}>Free to list. Reach buyers across the UK.</div>
               </div>
               <Link href="/sell" style={{
                 background: '#f59e0b', color: '#000', padding: '9px 16px',
@@ -239,9 +273,9 @@ export default function Home() {
                   📍 {activeListing.location} · {(activeListing.miles / 1000).toFixed(0)}k miles · {activeListing.year}
                 </div>
                 <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.8px', color: '#111', marginBottom: 14 }}>
-                  {activeListing.priceLabel} <span style={{ fontSize: 12, color: '#ccc', fontWeight: 400 }}>ono</span>
+                  {activeListing.priceLabel || activeListing.price_label} <span style={{ fontSize: 12, color: '#ccc', fontWeight: 400 }}>ono</span>
                 </div>
-                <Link href="/buy" style={{
+                <Link href={`/listings/${activeListing.id}`} style={{
                   display: 'block', background: '#111', color: '#fff',
                   textAlign: 'center', padding: 12, borderRadius: 9,
                   fontWeight: 700, fontSize: 13, textDecoration: 'none',

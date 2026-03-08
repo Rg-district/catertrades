@@ -1,16 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
+  const { title, make, model, year, price, location, lat, lng, miles, tags, description, seller_name, seller_email, seller_phone } = body
 
   try {
-    const { createClient } = await import('@supabase/supabase-js')
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-    const { error } = await supabase.from('seller_enquiries').insert([{
-      ...body, status: 'new', created_at: new Date().toISOString(),
+    const { error } = await supabaseAdmin.from('listings').insert([{
+      title: title || `${year} ${make} ${model}`,
+      make,
+      model,
+      year,
+      price,
+      price_label: `£${Number(price).toLocaleString()}`,
+      location,
+      lat: lat || null,
+      lng: lng || null,
+      miles: miles || null,
+      tags: tags || [],
+      description,
+      seller_name,
+      seller_email,
+      seller_phone,
+      status: 'pending',
     }])
     if (error) console.error('Supabase error:', error)
   } catch (e) {
@@ -23,7 +35,7 @@ export async function POST(req: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: process.env.TELEGRAM_CHAT_ID,
-        text: `🚐 *New SELLER listing — CaterTrades*\n\n${body.year} ${body.make} ${body.model}\nAsking: £${body.asking_price}\nLocation: ${body.location}\nCondition: ${body.condition}\n\nContact: ${body.name} · ${body.email} · ${body.phone}\n\nDescription: ${body.description}`,
+        text: `🚐 *New SELLER listing — CaterTrades*\n\n${year} ${make} ${model}\nAsking: £${Number(price).toLocaleString()}\nLocation: ${location}\n\nContact: ${seller_name} · ${seller_email} · ${seller_phone}\n\nDescription: ${description}`,
         parse_mode: 'Markdown',
       }),
     })

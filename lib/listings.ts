@@ -6,6 +6,7 @@ export interface Listing {
   year: number
   price: number
   priceLabel: string
+  price_label?: string
   location: string
   lat: number
   lng: number
