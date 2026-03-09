@@ -83,8 +83,8 @@ export default function ListingPage() {
     return (
       <div style={{ minHeight: '100vh', background: '#fafafa', fontFamily: '-apple-system, BlinkMacSystemFont, Inter, sans-serif' }}>
         <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 28px', height: 58, background: '#fff', borderBottom: '1px solid #ebebeb' }}>
-          <Link href="/" style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.5px', textDecoration: 'none', color: '#111' }}>
-            <span style={{ color: '#f59e0b' }}>Cater</span>Trades
+          <Link href="/">
+            <img src="/logo.png" alt="CaterTrades" style={{ height: 36 }} />
           </Link>
         </nav>
         <div style={{ textAlign: 'center', padding: '80px 20px', color: '#aaa', fontSize: 15 }}>Loading...</div>
@@ -96,8 +96,8 @@ export default function ListingPage() {
     return (
       <div style={{ minHeight: '100vh', background: '#fafafa', fontFamily: '-apple-system, BlinkMacSystemFont, Inter, sans-serif' }}>
         <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 28px', height: 58, background: '#fff', borderBottom: '1px solid #ebebeb' }}>
-          <Link href="/" style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.5px', textDecoration: 'none', color: '#111' }}>
-            <span style={{ color: '#f59e0b' }}>Cater</span>Trades
+          <Link href="/">
+            <img src="/logo.png" alt="CaterTrades" style={{ height: 36 }} />
           </Link>
         </nav>
         <div style={{ textAlign: 'center', padding: '80px 20px' }}>
@@ -113,8 +113,8 @@ export default function ListingPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#fafafa', fontFamily: '-apple-system, BlinkMacSystemFont, Inter, sans-serif' }}>
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 28px', height: 58, background: '#fff', borderBottom: '1px solid #ebebeb' }}>
-        <Link href="/" style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.5px', textDecoration: 'none', color: '#111' }}>
-          <span style={{ color: '#f59e0b' }}>Cater</span>Trades
+        <Link href="/">
+          <img src="/logo.png" alt="CaterTrades" style={{ height: 36 }} />
         </Link>
         <Link href="/" style={{ fontSize: 13, color: '#888', textDecoration: 'none' }}>← Back to listings</Link>
       </nav>

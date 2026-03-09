@@ -58,8 +58,8 @@ export default function GuidePage() {
       {/* Header */}
       <header className="border-b border-gray-100 bg-white sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold">
-            Cater<span className="text-amber-500">Trades</span>
+          <Link href="/">
+            <img src="/logo.png" alt="CaterTrades" className="h-10" />
           </Link>
           <Link href="/browse" className="text-sm text-gray-600 hover:text-gray-900">
             Browse Vehicles →

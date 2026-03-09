@@ -74,9 +74,9 @@ export default function Home() {
         borderBottom: '1px solid #ebebeb', flexShrink: 0, gap: 24,
       }}>
         {/* Logo */}
-        <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.5px', flexShrink: 0 }}>
-          <span style={{ color: '#f59e0b' }}>Cater</span>Trades
-        </div>
+        <a href="/" style={{ flexShrink: 0 }}>
+          <img src="/logo.png" alt="CaterTrades" style={{ height: 36 }} />
+        </a>
 
         {/* Filters */}
         <div style={{
