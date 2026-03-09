@@ -71,7 +71,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50" style={{ position: 'fixed', inset: 0 }}>
 
       {/* Nav - Desktop */}
       <nav className="hidden md:flex items-center justify-between px-7 h-14 bg-white border-b border-gray-200 shrink-0 gap-6">
