@@ -171,9 +171,19 @@ export default function Home() {
 
           {/* Cards */}
           <div style={{ padding: 10 }}>
-            {!loading && filtered.length === 0 ? (
+            {loading ? (
               <div style={{ padding: 40, textAlign: 'center', color: '#aaa', fontSize: 14 }}>
-                No vehicles match your filters
+                Loading vehicles...
+              </div>
+            ) : filtered.length === 0 ? (
+              <div style={{ padding: 40, textAlign: 'center' }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>🚐</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#111', marginBottom: 8 }}>No vehicles listed yet</div>
+                <p style={{ color: '#888', fontSize: 14, marginBottom: 20 }}>Be the first to list your catering vehicle!</p>
+                <Link href="/sell" style={{
+                  display: 'inline-block', background: '#10b981', color: '#fff',
+                  padding: '12px 24px', borderRadius: 8, fontWeight: 700, fontSize: 14, textDecoration: 'none',
+                }}>List Your Vehicle — Free</Link>
               </div>
             ) : filtered.map(listing => (
               <Link key={listing.id} href={`/listings/${listing.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
