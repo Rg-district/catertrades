@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   const vehicle_type = searchParams.get('vehicle_type')
 
   let query = supabase
-    .from('listings')
+    .from('ct_listings')
     .select('*')
     .eq('status', 'available')
     .order('featured', { ascending: false })

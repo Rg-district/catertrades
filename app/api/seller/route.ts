@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   const { title, make, model, year, price, location, lat, lng, miles, tags, description, seller_name, seller_email, seller_phone } = body
 
   try {
-    const { error } = await supabaseAdmin.from('listings').insert([{
+    const { error } = await supabaseAdmin.from('ct_listings').insert([{
       title: title || `${year} ${make} ${model}`,
       make,
       model,
