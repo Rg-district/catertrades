@@ -1,5 +1,3 @@
-// import Stripe from "stripe" // Reserved for future monetisation
-
 'use client'
 
 import { useState } from 'react'
@@ -52,89 +50,119 @@ export default function SellPage() {
     }
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '11px 14px', border: '1.5px solid #e8e8e8',
-    borderRadius: 9, fontSize: 14, fontFamily: 'inherit', outline: 'none',
-    background: '#fff', color: '#111', transition: 'border-color 0.15s',
-  }
-  const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: '#555', marginBottom: 6, display: 'block' }
-
   return (
-    <div style={{ minHeight: '100vh', background: '#fafafa', fontFamily: '-apple-system, BlinkMacSystemFont, Inter, sans-serif' }}>
-      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 28px', height: 58, background: '#fff', borderBottom: '1px solid #ebebeb' }}>
+    <div className="min-h-screen bg-gray-50 overflow-y-auto">
+      {/* Nav */}
+      <nav className="flex justify-between items-center px-4 md:px-7 h-14 bg-white border-b border-gray-200 sticky top-0 z-10">
         <Link href="/">
-          <img src="/logo.png" alt="CaterTrades" style={{ height: 36 }} />
+          <img src="/logo.png" alt="CaterTrades" className="h-8 md:h-9" />
         </Link>
-        <Link href="/" style={{ fontSize: 13, color: '#888', textDecoration: 'none' }}>← Back to listings</Link>
+        <Link href="/" className="text-sm text-gray-500 hover:text-gray-900">
+          ← Back to listings
+        </Link>
       </nav>
 
-      <div style={{ maxWidth: 560, margin: '0 auto', padding: '48px 20px' }}>
+      <div className="max-w-xl mx-auto px-4 py-8 md:py-12 pb-20">
         {status === 'success' ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 20 }}>✅</div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 12 }}>Listing submitted</h2>
-            <p style={{ color: '#888', fontSize: 15, lineHeight: 1.7 }}>Your listing has been submitted. We will review it within 24 hours.</p>
-            <Link href="/" style={{ display: 'inline-block', marginTop: 28, background: '#111', color: '#fff', padding: '12px 24px', borderRadius: 8, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>Back to listings</Link>
+          <div className="text-center py-16">
+            <div className="text-5xl mb-5">✅</div>
+            <h2 className="text-2xl font-extrabold mb-3">Listing submitted</h2>
+            <p className="text-gray-500 text-base leading-relaxed mb-8">
+              Your listing has been submitted. We&apos;ll review it within 24 hours.
+            </p>
+            <Link href="/" className="inline-block bg-gray-900 text-white px-6 py-3 rounded-lg font-bold text-sm">
+              Back to listings
+            </Link>
           </div>
         ) : (
           <>
-            <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-1px', marginBottom: 8 }}>List your vehicle</h1>
-            <p style={{ color: '#888', fontSize: 15, lineHeight: 1.7, marginBottom: 36 }}>Free to list. Free to browse. Reach serious buyers across the UK.</p>
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-2">List your vehicle</h1>
+            <p className="text-gray-500 text-sm md:text-base leading-relaxed mb-8">
+              Free to list. Free to browse. Reach serious buyers across the UK.
+            </p>
 
-            <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <form onSubmit={submit} className="space-y-5">
               {/* Vehicle details */}
-              <div style={{ background: '#fff', border: '1px solid #ebebeb', borderRadius: 14, padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#111', marginBottom: 4 }}>Vehicle details</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
+                <div className="text-sm font-bold text-gray-900">Vehicle details</div>
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label style={labelStyle}>Make</label>
-                    <input name="make" type="text" placeholder="Renault" value={form.make} onChange={handle} required style={inputStyle} />
+                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Make</label>
+                    <input
+                      name="make" type="text" placeholder="Renault"
+                      value={form.make} onChange={handle} required
+                      className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:border-gray-400 focus:outline-none"
+                    />
                   </div>
                   <div>
-                    <label style={labelStyle}>Model</label>
-                    <input name="model" type="text" placeholder="Master" value={form.model} onChange={handle} required style={inputStyle} />
+                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Model</label>
+                    <input
+                      name="model" type="text" placeholder="Master"
+                      value={form.model} onChange={handle} required
+                      className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:border-gray-400 focus:outline-none"
+                    />
                   </div>
                   <div>
-                    <label style={labelStyle}>Year</label>
-                    <input name="year" type="number" placeholder="2017" value={form.year} onChange={handle} required style={inputStyle} />
+                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Year</label>
+                    <input
+                      name="year" type="number" placeholder="2017"
+                      value={form.year} onChange={handle} required
+                      className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:border-gray-400 focus:outline-none"
+                    />
                   </div>
                   <div>
-                    <label style={labelStyle}>Mileage</label>
-                    <input name="miles" type="number" placeholder="88000" value={form.miles} onChange={handle} required style={inputStyle} />
+                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Mileage</label>
+                    <input
+                      name="miles" type="number" placeholder="88000"
+                      value={form.miles} onChange={handle} required
+                      className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:border-gray-400 focus:outline-none"
+                    />
                   </div>
                 </div>
                 <div>
-                  <label style={labelStyle}>Asking Price (£)</label>
-                  <input name="price" type="number" placeholder="42000" value={form.price} onChange={handle} required style={inputStyle} />
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Asking Price (£)</label>
+                  <input
+                    name="price" type="number" placeholder="42000"
+                    value={form.price} onChange={handle} required
+                    className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:border-gray-400 focus:outline-none"
+                  />
                 </div>
                 <div>
-                  <label style={labelStyle}>Location</label>
-                  <input name="location" type="text" placeholder="Epping, Essex" value={form.location} onChange={handle} required style={inputStyle} />
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Location</label>
+                  <input
+                    name="location" type="text" placeholder="Epping, Essex"
+                    value={form.location} onChange={handle} required
+                    className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:border-gray-400 focus:outline-none"
+                  />
                 </div>
                 <div>
-                  <label style={labelStyle}>Description</label>
-                  <textarea name="description" placeholder="Describe the build, equipment, condition, and any key features..." value={form.description} onChange={handle} rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Description</label>
+                  <textarea
+                    name="description" placeholder="Describe the build, equipment, condition, and any key features..."
+                    value={form.description} onChange={handle} rows={4}
+                    className="w-full p-3 border border-gray-200 rounded-lg text-sm resize-y focus:border-gray-400 focus:outline-none"
+                  />
                 </div>
               </div>
 
               {/* Equipment tags */}
-              <div style={{ background: '#fff', border: '1px solid #ebebeb', borderRadius: 14, padding: 24 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#111', marginBottom: 14 }}>Equipment</div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <div className="bg-white border border-gray-200 rounded-xl p-5">
+                <div className="text-sm font-bold text-gray-900 mb-4">Equipment</div>
+                <div className="flex gap-2 flex-wrap">
                   {EQUIPMENT_TAGS.map(tag => (
-                    <label key={tag} style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      fontSize: 13, color: tags.includes(tag) ? '#111' : '#888',
-                      background: tags.includes(tag) ? '#fef3c7' : '#f5f5f5',
-                      border: `1.5px solid ${tags.includes(tag) ? '#f59e0b' : '#e8e8e8'}`,
-                      padding: '7px 14px', borderRadius: 100, cursor: 'pointer',
-                      fontWeight: 500, transition: 'all 0.15s',
-                    }}>
+                    <label
+                      key={tag}
+                      className={`flex items-center gap-1.5 text-sm px-3 py-2 rounded-full cursor-pointer font-medium transition-all border-2
+                        ${tags.includes(tag)
+                          ? 'bg-amber-50 border-amber-400 text-gray-900'
+                          : 'bg-gray-50 border-gray-200 text-gray-500'
+                        }`}
+                    >
                       <input
                         type="checkbox"
                         checked={tags.includes(tag)}
                         onChange={() => toggleTag(tag)}
-                        style={{ display: 'none' }}
+                        className="hidden"
                       />
                       {tag}
                     </label>
@@ -143,30 +171,49 @@ export default function SellPage() {
               </div>
 
               {/* Seller contact */}
-              <div style={{ background: '#fff', border: '1px solid #ebebeb', borderRadius: 14, padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#111', marginBottom: 4 }}>Your contact details</div>
+              <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
+                <div className="text-sm font-bold text-gray-900">Your contact details</div>
                 <div>
-                  <label style={labelStyle}>Name</label>
-                  <input name="seller_name" type="text" placeholder="Jane Smith" value={form.seller_name} onChange={handle} required style={inputStyle} />
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Name</label>
+                  <input
+                    name="seller_name" type="text" placeholder="Jane Smith"
+                    value={form.seller_name} onChange={handle} required
+                    className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:border-gray-400 focus:outline-none"
+                  />
                 </div>
                 <div>
-                  <label style={labelStyle}>Email</label>
-                  <input name="seller_email" type="email" placeholder="jane@example.com" value={form.seller_email} onChange={handle} required style={inputStyle} />
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Email</label>
+                  <input
+                    name="seller_email" type="email" placeholder="jane@example.com"
+                    value={form.seller_email} onChange={handle} required
+                    className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:border-gray-400 focus:outline-none"
+                  />
                 </div>
                 <div>
-                  <label style={labelStyle}>Phone</label>
-                  <input name="seller_phone" type="tel" placeholder="+44 7700 900000" value={form.seller_phone} onChange={handle} required style={inputStyle} />
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Phone</label>
+                  <input
+                    name="seller_phone" type="tel" placeholder="+44 7700 900000"
+                    value={form.seller_phone} onChange={handle} required
+                    className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:border-gray-400 focus:outline-none"
+                  />
                 </div>
               </div>
 
-              <button type="submit" disabled={status === 'loading'} style={{
-                background: status === 'loading' ? '#888' : '#111', color: '#fff',
-                padding: '14px 24px', borderRadius: 10, fontWeight: 700, fontSize: 15,
-                border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-              }}>
+              <button
+                type="submit"
+                disabled={status === 'loading'}
+                className={`w-full py-4 rounded-xl font-bold text-base transition-colors
+                  ${status === 'loading' ? 'bg-gray-400' : 'bg-gray-900 hover:bg-gray-800'}
+                  text-white`}
+              >
                 {status === 'loading' ? 'Submitting...' : 'Submit Listing (Free)'}
               </button>
-              {status === 'error' && <p style={{ color: '#e53e3e', fontSize: 13, textAlign: 'center' }}>Something went wrong. Please try again.</p>}
+
+              {status === 'error' && (
+                <p className="text-red-600 text-sm text-center">
+                  Something went wrong. Please try again.
+                </p>
+              )}
             </form>
           </>
         )}
