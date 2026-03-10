@@ -1,308 +1,289 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import dynamic from 'next/dynamic'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { type Listing } from '@/lib/listings'
+import { Menu, Heart, Search, X, ChevronDown, MapPin, User } from 'lucide-react'
 
-const Map = dynamic(() => import('./components/Map'), { ssr: false })
-
-const VEHICLE_TYPES = ['All', 'Van', 'Truck', 'Trailer', 'Cart']
-const BUDGETS = [
-  { label: 'Any budget', min: 0, max: Infinity },
-  { label: 'Under £30k', min: 0, max: 30000 },
-  { label: '£30k – £60k', min: 30000, max: 60000 },
+const VEHICLE_TYPES = ['Any Type', 'Van', 'Truck', 'Trailer', 'Cart']
+const PRICE_RANGES = [
+  { label: 'Any Price', min: 0, max: Infinity },
+  { label: 'Under £20k', min: 0, max: 20000 },
+  { label: '£20k - £40k', min: 20000, max: 40000 },
+  { label: '£40k - £60k', min: 40000, max: 60000 },
   { label: '£60k+', min: 60000, max: Infinity },
 ]
-const LOCATIONS = ['Anywhere', 'London', 'Manchester', 'Birmingham', 'Bristol', 'Essex']
-const SORT_OPTIONS = ['Recently listed', 'Price: Low–High', 'Price: High–Low']
 
 export default function Home() {
-  const [listings, setListings] = useState<Listing[]>([])
-  const [activeListing, setActiveListing] = useState<Listing | null>(null)
-  const [vehicleType, setVehicleType] = useState('All')
-  const [budget, setBudget] = useState(0)
-  const [location, setLocation] = useState('Anywhere')
-  const [sort, setSort] = useState('Recently listed')
-  const [loading, setLoading] = useState(true)
-  const [showFilters, setShowFilters] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [showMoreFilters, setShowMoreFilters] = useState(false)
+  const [listingCount, setListingCount] = useState(0)
+  const [filters, setFilters] = useState({
+    location: '',
+    type: 'Any Type',
+    priceRange: 0,
+  })
 
   useEffect(() => {
-    async function fetchListings() {
-      try {
-        const params = new URLSearchParams()
-        if (location !== 'Anywhere') params.set('location', location)
-        const budgetObj = BUDGETS[budget]
-        if (budgetObj.min > 0) params.set('min_price', String(budgetObj.min))
-        if (budgetObj.max < Infinity) params.set('max_price', String(budgetObj.max))
-        if (vehicleType !== 'All') params.set('vehicle_type', vehicleType)
-
-        const res = await fetch(`/api/listings?${params.toString()}`)
-        const data = await res.json()
-        const fetched: Listing[] = (data.listings || []).map((l: Record<string, unknown>) => ({
-          ...l,
-          priceLabel: l.price_label as string,
-          tags: (l.tags as string[]) || [],
-        }))
-        setListings(fetched)
-        if (fetched.length > 0 && !activeListing) setActiveListing(fetched[0])
-      } catch (e) {
-        console.error('Failed to fetch listings:', e)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchListings()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vehicleType, budget, location])
-
-  const filtered = useMemo(() => {
-    let result = [...listings]
-    if (sort === 'Price: Low–High') result.sort((a, b) => a.price - b.price)
-    if (sort === 'Price: High–Low') result.sort((a, b) => b.price - a.price)
-    result.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
-    return result
-  }, [listings, sort])
-
-  const selectStyle: React.CSSProperties = {
-    border: 'none', outline: 'none', fontSize: 13, fontWeight: 600,
-    color: '#111', background: 'transparent', width: '100%',
-    cursor: 'pointer', fontFamily: 'inherit',
-  }
+    // Fetch listing count
+    fetch('/api/listings')
+      .then(r => r.json())
+      .then(d => setListingCount(d.listings?.length || 0))
+      .catch(() => setListingCount(0))
+  }, [])
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-gray-50" style={{ position: 'fixed', inset: 0 }}>
-
-      {/* Nav - Desktop */}
-      <nav className="hidden md:flex items-center justify-between px-7 h-14 bg-white border-b border-gray-200 shrink-0 gap-6">
-        <a href="/" className="shrink-0">
-          <img src="/logo.png" alt="CaterTrades" className="h-9" />
-        </a>
-
-        {/* Filters - Desktop */}
-        <div className="flex flex-1 max-w-xl bg-gray-100 border border-gray-200 rounded-lg overflow-hidden">
-          {[
-            { label: 'Type', value: vehicleType, onChange: setVehicleType, options: VEHICLE_TYPES },
-            { label: 'Budget', value: budget, onChange: (v: string) => setBudget(Number(v)), options: BUDGETS.map((b, i) => ({ label: b.label, value: i })) },
-            { label: 'Location', value: location, onChange: setLocation, options: LOCATIONS },
-          ].map((f, i, arr) => (
-            <div key={f.label} className={`flex-1 px-3 py-2 ${i < arr.length - 1 ? 'border-r border-gray-200' : ''}`}>
-              <div className="text-[9px] uppercase tracking-wider text-gray-400 font-bold mb-0.5">{f.label}</div>
-              <select
-                value={f.value}
-                onChange={e => f.onChange(e.target.value)}
-                style={selectStyle}
-              >
-                {Array.isArray(f.options) && f.options.map((opt: string | { label: string; value: number }) =>
-                  typeof opt === 'string'
-                    ? <option key={opt}>{opt}</option>
-                    : <option key={opt.value} value={opt.value}>{opt.label}</option>
-                )}
-              </select>
+    <div className="min-h-screen bg-white">
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between h-14">
+            {/* Left */}
+            <div className="flex items-center gap-4">
+              <button onClick={() => setMenuOpen(true)} className="p-2 -ml-2 hover:bg-gray-100 rounded-lg">
+                <Menu className="w-5 h-5 text-gray-700" />
+              </button>
+              <Link href="/sell" className="text-sm font-semibold text-gray-700 hover:text-emerald-600">
+                Sell
+              </Link>
             </div>
-          ))}
-        </div>
 
-        <div className="flex gap-4 items-center shrink-0">
-          <Link href="/sell" className="text-gray-500 text-sm font-medium hover:text-gray-900">Sell</Link>
-          <Link href="/guide" className="text-gray-500 text-sm font-medium hover:text-gray-900">Guide</Link>
-          <Link href="/sell" className="bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-sm">
-            + List a Vehicle
-          </Link>
+            {/* Center - Logo */}
+            <Link href="/" className="absolute left-1/2 -translate-x-1/2">
+              <img src="/logo.png" alt="CaterTrades" className="h-8" />
+            </Link>
+
+            {/* Right */}
+            <div className="flex items-center gap-3">
+              <Link href="/saved" className="p-2 hover:bg-gray-100 rounded-lg">
+                <Heart className="w-5 h-5 text-gray-700" />
+              </Link>
+              <Link href="/search" className="p-2 hover:bg-gray-100 rounded-lg">
+                <Search className="w-5 h-5 text-gray-700" />
+              </Link>
+              <Link href="/account" className="p-2 hover:bg-gray-100 rounded-lg">
+                <User className="w-5 h-5 text-gray-700" />
+              </Link>
+            </div>
+          </div>
         </div>
       </nav>
 
-      {/* Nav - Mobile */}
-      <nav className="md:hidden bg-white border-b border-gray-200 shrink-0">
-        <div className="flex items-center justify-between px-4 h-14">
-          <a href="/">
-            <img src="/logo.png" alt="CaterTrades" className="h-8" />
-          </a>
-          <div className="flex items-center gap-3">
+      {/* Mobile Menu Overlay */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50" onClick={() => setMenuOpen(false)}>
+          <div className="absolute left-0 top-0 bottom-0 w-72 bg-white" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b">
+              <span className="font-bold text-lg">Menu</span>
+              <button onClick={() => setMenuOpen(false)}><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-4 space-y-2">
+              <Link href="/" className="block py-3 px-4 rounded-lg hover:bg-gray-100 font-medium">Browse Vehicles</Link>
+              <Link href="/sell" className="block py-3 px-4 rounded-lg hover:bg-gray-100 font-medium">Sell Your Vehicle</Link>
+              <Link href="/guide" className="block py-3 px-4 rounded-lg hover:bg-gray-100 font-medium">Buyer's Guide</Link>
+              <Link href="/account" className="block py-3 px-4 rounded-lg hover:bg-gray-100 font-medium">My Account</Link>
+              <hr className="my-4" />
+              <Link href="/account/register" className="block py-3 px-4 rounded-lg bg-emerald-500 text-white text-center font-semibold">
+                Create Account
+              </Link>
+              <Link href="/account/login" className="block py-3 px-4 rounded-lg border border-gray-200 text-center font-medium">
+                Sign In
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hero Section */}
+      <section className="relative pt-14">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: 'url(https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?w=1600&q=80)',
+            height: '420px',
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+        </div>
+
+        {/* Hero Content */}
+        <div className="relative z-10 max-w-3xl mx-auto px-4 pt-10 pb-8 text-center" style={{ minHeight: '340px' }}>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+            Find your <span className="text-emerald-400">perfect</span> catering vehicle
+          </h1>
+          <p className="text-white/80 text-base mb-8">
+            The UK's specialist marketplace for food trucks, vans & mobile kitchens
+          </p>
+
+          {/* Search Card */}
+          <div className="bg-white rounded-2xl shadow-xl p-5 text-left">
+            {/* Location */}
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Location</label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Enter postcode or city"
+                  value={filters.location}
+                  onChange={e => setFilters(f => ({ ...f, location: e.target.value }))}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-base focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Type & Price */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Type</label>
+                <div className="relative">
+                  <select
+                    value={filters.type}
+                    onChange={e => setFilters(f => ({ ...f, type: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-base appearance-none bg-white focus:border-emerald-500 outline-none"
+                  >
+                    {VEHICLE_TYPES.map(t => <option key={t}>{t}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Price</label>
+                <div className="relative">
+                  <select
+                    value={filters.priceRange}
+                    onChange={e => setFilters(f => ({ ...f, priceRange: Number(e.target.value) }))}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-base appearance-none bg-white focus:border-emerald-500 outline-none"
+                  >
+                    {PRICE_RANGES.map((p, i) => <option key={i} value={i}>{p.label}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+            </div>
+
+            {/* More Options */}
             <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 rounded-lg text-sm font-medium"
+              onClick={() => setShowMoreFilters(!showMoreFilters)}
+              className="text-emerald-600 text-sm font-semibold mb-4 hover:underline"
             >
-              <span>Filters</span>
-              <span className="text-xs">{showFilters ? '▲' : '▼'}</span>
+              {showMoreFilters ? 'Less options' : 'More options'}
             </button>
-            <Link href="/sell" className="bg-gray-900 text-white px-4 py-1.5 rounded-lg font-bold text-sm">
-              + List
+
+            {showMoreFilters && (
+              <div className="grid grid-cols-2 gap-3 mb-4 pt-2 border-t border-gray-100">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Min Year</label>
+                  <input type="number" placeholder="2015" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Max Miles</label>
+                  <input type="number" placeholder="100,000" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
+                </div>
+              </div>
+            )}
+
+            {/* Search Button */}
+            <Link
+              href={`/browse?location=${filters.location}&type=${filters.type}&price=${filters.priceRange}`}
+              className="block w-full bg-emerald-500 hover:bg-emerald-600 text-white text-center py-4 rounded-xl font-bold text-base transition-colors"
+            >
+              <Search className="inline w-5 h-5 mr-2 -mt-0.5" />
+              Search {listingCount > 0 ? `${listingCount} vehicles` : 'vehicles'}
             </Link>
           </div>
         </div>
+      </section>
 
-        {/* Mobile Filters Dropdown */}
-        {showFilters && (
-          <div className="px-4 pb-4 pt-2 border-t border-gray-100 bg-gray-50 space-y-3">
-            <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Type</label>
-              <select
-                value={vehicleType}
-                onChange={e => setVehicleType(e.target.value)}
-                className="w-full p-2.5 border border-gray-200 rounded-lg bg-white text-sm font-medium"
-              >
-                {VEHICLE_TYPES.map(t => <option key={t}>{t}</option>)}
-              </select>
+      {/* Sign In / Create Account */}
+      <section className="max-w-3xl mx-auto px-4 py-6 mt-4">
+        <Link href="/account" className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 hover:bg-gray-100 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center border border-gray-200">
+              <User className="w-5 h-5 text-gray-600" />
             </div>
+            <span className="font-semibold text-gray-900">Sign in or create an account</span>
+          </div>
+          <ChevronDown className="w-5 h-5 text-gray-400 -rotate-90" />
+        </Link>
+      </section>
+
+      {/* Quick Actions */}
+      <section className="max-w-3xl mx-auto px-4 py-4 space-y-3">
+        <Link href="/sell" className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3">
+            <div className="text-2xl">🚐</div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Budget</label>
-              <select
-                value={budget}
-                onChange={e => setBudget(Number(e.target.value))}
-                className="w-full p-2.5 border border-gray-200 rounded-lg bg-white text-sm font-medium"
-              >
-                {BUDGETS.map((b, i) => <option key={i} value={i}>{b.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Location</label>
-              <select
-                value={location}
-                onChange={e => setLocation(e.target.value)}
-                className="w-full p-2.5 border border-gray-200 rounded-lg bg-white text-sm font-medium"
-              >
-                {LOCATIONS.map(l => <option key={l}>{l}</option>)}
-              </select>
+              <div className="font-semibold text-gray-900">Sell your vehicle</div>
+              <div className="text-sm text-gray-500">Free to list • Reach buyers across the UK</div>
             </div>
           </div>
-        )}
-      </nav>
+          <ChevronDown className="w-5 h-5 text-gray-400 -rotate-90" />
+        </Link>
 
-      {/* Body */}
-      <div className="flex flex-1 overflow-hidden">
-
-        {/* Feed - Full width on mobile, fixed width on desktop */}
-        <div className="w-full md:w-[400px] md:shrink-0 overflow-y-auto border-r border-gray-200 bg-white">
-          {/* List free CTA */}
-          <Link href="/sell" className="flex items-center justify-between px-4 py-3 bg-amber-100 border-b border-amber-200 text-amber-800 text-sm font-bold">
-            <span>List your vehicle free →</span>
-            <span className="text-xs font-medium text-amber-700">No fees</span>
-          </Link>
-
-          {/* Feed header */}
-          <div className="px-4 pt-4 pb-3 border-b border-gray-100 sticky top-0 bg-white z-10">
-            <div className="text-base font-extrabold tracking-tight">
-              {loading ? 'Loading...' : `${filtered.length} vehicle${filtered.length !== 1 ? 's' : ''} available`}
-            </div>
-            <div className="text-xs text-gray-400 mt-0.5">
-              UK · {vehicleType === 'All' ? 'All types' : vehicleType} · {BUDGETS[budget].label}
-            </div>
-            {/* Sort pills */}
-            <div className="flex gap-1.5 mt-3 overflow-x-auto pb-1 -mx-4 px-4">
-              {SORT_OPTIONS.map(s => (
-                <button key={s} onClick={() => setSort(s)} className={`
-                  px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap
-                  border transition-colors shrink-0
-                  ${sort === s ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200'}
-                `}>{s}</button>
-              ))}
+        <Link href="/guide" className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3">
+            <div className="text-2xl">📖</div>
+            <div>
+              <div className="font-semibold text-gray-900">First-time buyer's guide</div>
+              <div className="text-sm text-gray-500">Everything you need to know before buying</div>
             </div>
           </div>
+          <ChevronDown className="w-5 h-5 text-gray-400 -rotate-90" />
+        </Link>
 
-          {/* Cards */}
-          <div className="p-2.5">
-            {loading ? (
-              <div className="py-10 text-center text-gray-400 text-sm">
-                Loading vehicles...
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className="py-10 text-center">
-                <div className="text-5xl mb-4">🚐</div>
-                <div className="text-lg font-bold text-gray-900 mb-2">No vehicles listed yet</div>
-                <p className="text-gray-500 text-sm mb-5">Be the first to list your catering vehicle!</p>
-                <Link href="/sell" className="inline-block bg-emerald-500 text-white px-6 py-3 rounded-lg font-bold text-sm">
-                  List Your Vehicle — Free
-                </Link>
-              </div>
-            ) : filtered.map(listing => (
-              <Link key={listing.id} href={`/listings/${listing.id}`} className="block mb-2">
-                <div
-                  onClick={(e) => { e.preventDefault(); setActiveListing(listing) }}
-                  className={`
-                    flex bg-white rounded-xl overflow-hidden cursor-pointer transition-all
-                    border-2 ${activeListing?.id === listing.id ? 'border-amber-400 shadow-md' : 'border-gray-100'}
-                  `}
-                >
-                  {/* Image */}
-                  <div className="w-24 md:w-28 shrink-0 bg-gray-100 flex items-center justify-center text-3xl relative">
-                    🚐
-                    {listing.featured && (
-                      <div className="absolute top-2 left-2 bg-amber-500 text-black text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">
-                        Featured
-                      </div>
-                    )}
-                  </div>
-                  {/* Body */}
-                  <div className="p-3 flex-1 min-w-0">
-                    <div className="text-sm font-bold text-gray-900 truncate mb-1">
-                      {listing.title}
-                    </div>
-                    <div className="text-xs text-gray-400 mb-2">
-                      📍 {listing.location} · {(listing.miles / 1000).toFixed(0)}k mi · {listing.year}
-                    </div>
-                    <div className="text-lg font-extrabold tracking-tight text-gray-900">
-                      {listing.priceLabel || listing.price_label}
-                      <span className="text-xs text-gray-300 font-normal ml-1">ono</span>
-                    </div>
-                    <div className="flex gap-1 flex-wrap mt-2">
-                      {listing.tags.slice(0, 2).map(tag => (
-                        <span key={tag} className="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded font-medium">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-
-            {/* Sell CTA at bottom */}
-            <div className="my-2 bg-gray-900 rounded-xl p-4 flex justify-between items-center">
-              <div>
-                <div className="text-sm font-bold text-white">Got a vehicle to sell?</div>
-                <div className="text-xs text-gray-500 mt-1">Free to list. Reach buyers across the UK.</div>
-              </div>
-              <Link href="/sell" className="bg-amber-500 text-black px-4 py-2 rounded-lg font-bold text-xs whitespace-nowrap">
-                List yours →
-              </Link>
+        <Link href="/browse" className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3">
+            <div className="text-2xl">🔍</div>
+            <div>
+              <div className="font-semibold text-gray-900">Browse all vehicles</div>
+              <div className="text-sm text-gray-500">View our full inventory with photos</div>
             </div>
+          </div>
+          <ChevronDown className="w-5 h-5 text-gray-400 -rotate-90" />
+        </Link>
+      </section>
+
+      {/* Why CaterTrades */}
+      <section className="max-w-3xl mx-auto px-4 py-10">
+        <h2 className="text-xl font-bold text-gray-900 mb-6 text-center">Why CaterTrades?</h2>
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="p-4">
+            <div className="text-3xl mb-2">✅</div>
+            <div className="font-semibold text-sm text-gray-900">Verified Sellers</div>
+            <div className="text-xs text-gray-500 mt-1">Every listing reviewed</div>
+          </div>
+          <div className="p-4">
+            <div className="text-3xl mb-2">🆓</div>
+            <div className="font-semibold text-sm text-gray-900">Free to List</div>
+            <div className="text-xs text-gray-500 mt-1">No fees, no commission</div>
+          </div>
+          <div className="p-4">
+            <div className="text-3xl mb-2">🇬🇧</div>
+            <div className="font-semibold text-sm text-gray-900">UK Specialist</div>
+            <div className="text-xs text-gray-500 mt-1">Catering vehicles only</div>
           </div>
         </div>
+      </section>
 
-        {/* Map + detail - Hidden on mobile */}
-        <div className="hidden md:block flex-1 relative overflow-hidden">
-          <Map listings={filtered} activeListing={activeListing} onSelect={setActiveListing} />
-
-          {/* Detail card */}
-          {activeListing && (
-            <div className="absolute bottom-6 right-6 w-72 bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-xl z-50">
-              <div className="h-32 bg-gray-100 flex items-center justify-center text-5xl relative">
-                🚐
-                {activeListing.featured && (
-                  <div className="absolute top-3 left-3 bg-amber-500 text-black text-[9px] font-bold px-2.5 py-1 rounded uppercase tracking-wide">
-                    Featured
-                  </div>
-                )}
-              </div>
-              <div className="p-4">
-                <div className="text-sm font-bold text-gray-900 mb-0.5">{activeListing.title}</div>
-                <div className="text-xs text-gray-400 mb-2">
-                  📍 {activeListing.location} · {(activeListing.miles / 1000).toFixed(0)}k mi · {activeListing.year}
-                </div>
-                <div className="text-xl font-extrabold tracking-tight text-gray-900 mb-3">
-                  {activeListing.priceLabel || activeListing.price_label}
-                  <span className="text-xs text-gray-300 font-normal ml-1">ono</span>
-                </div>
-                <Link href={`/listings/${activeListing.id}`} className="block bg-gray-900 text-white text-center py-2.5 rounded-lg font-bold text-sm">
-                  Enquire about this vehicle →
-                </Link>
-              </div>
-            </div>
-          )}
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-10 mt-10">
+        <div className="max-w-3xl mx-auto px-4">
+          <div className="flex justify-center mb-6">
+            <img src="/logo.png" alt="CaterTrades" className="h-8 brightness-0 invert" />
+          </div>
+          <div className="flex justify-center gap-6 text-sm text-gray-400 mb-6">
+            <Link href="/browse" className="hover:text-white">Browse</Link>
+            <Link href="/sell" className="hover:text-white">Sell</Link>
+            <Link href="/guide" className="hover:text-white">Guide</Link>
+            <Link href="/faq" className="hover:text-white">FAQ</Link>
+            <Link href="/contact" className="hover:text-white">Contact</Link>
+          </div>
+          <p className="text-center text-xs text-gray-500">
+            © 2026 CaterTrades. All rights reserved.
+          </p>
         </div>
-
-      </div>
+      </footer>
     </div>
   )
 }
